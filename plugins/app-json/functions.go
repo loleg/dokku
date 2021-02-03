@@ -227,14 +227,14 @@ func executeScript(appName string, image string, imageTag string, phase string) 
 
 	containerID, err := createdContainerID(appName, dockerArgs, image, script, phase)
 	if err != nil {
-		common.LogFail(fmt.Sprintf("Failed to create %s execution container: %s", phase, err.Error()))
+		return fmt.Errorf("Failed to create %s execution container: %s", phase, err.Error())
 	}
 
 	if !waitForExecution(containerID) {
 		common.LogInfo2Quiet(fmt.Sprintf("Start of %s %s task (%s) output", appName, phase, containerID[0:9]))
 		common.LogVerboseQuietContainerLogs(containerID)
 		common.LogInfo2Quiet(fmt.Sprintf("End of %s %s task (%s) output", appName, phase, containerID[0:9]))
-		common.LogFail(fmt.Sprintf("Execution of %s task failed: %s", phase, command))
+		return fmt.Errorf("Execution of %s task failed: %s", phase, command)
 	}
 
 	common.LogInfo2Quiet(fmt.Sprintf("Start of %s %s task (%s) output", appName, phase, containerID[0:9]))
@@ -274,7 +274,7 @@ func executeScript(appName string, image string, imageTag string, phase string) 
 	containerCommitCmd.ShowOutput = false
 	containerCommitCmd.Command.Stderr = os.Stderr
 	if !containerCommitCmd.Execute() {
-		common.LogFail(fmt.Sprintf("Commiting of '%s' to image failed: %s", phase, command))
+		return fmt.Errorf("Commiting of '%s' to image failed: %s", phase, command)
 	}
 
 	return common.PlugnTrigger("scheduler-register-retired", []string{appName, containerID}...)
